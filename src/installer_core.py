@@ -73,10 +73,10 @@ def get_hostname():
 def get_homepart():
     clear()
     while is_homepart:
-        print("Enter your home partition (eg: /dev/sda):")
+        print("Enter your home partition (eg: /dev/sda3):")
         hp = input("> ")
         if hp:
-            print("Are you sure? (y/n)")
+            print("Happy with your home partition? (y/n)")
             reply = input("> ")
             if reply.casefold() == "y":
                 break
@@ -292,7 +292,7 @@ def use_luks():
 def use_homepart():
     clear()
     while True:
-        print("Would you like to use separate home partition (y/n):")
+        print("Would you like to use a separate home partition (y/n):")
         reply = input("> ")
         if reply.casefold() == "y":
             hc = True
