@@ -69,6 +69,21 @@ def get_hostname():
                 continue
     return h
 
+#   Define a home partition
+def get_homepart():
+    clear()
+    while is_homepart:
+        print("Enter your home partition (eg: /dev/sda):")
+        hp = input("> ")
+        if hp:
+            print("Are you sure? (y/n)")
+            reply = input("> ")
+            if reply.casefold() == "y":
+                break
+            else:
+                continue
+    return hp
+
 #   This function returns a tuple: (1. choice whether partitioning and formatting should happen
 #   2. Underscore plus name of distro if it should be appended to sub-volume names
 def get_multiboot(dist):
@@ -221,6 +236,8 @@ def pre_bootstrap():
     for mntdir in mntdirs:
         os.system(f"sudo mkdir -p /mnt/{mntdir}") # -p to ignore /mnt exists complaint
         os.system(f"sudo mount {btrfs_root} -o subvol={btrdirs[mntdirs.index(mntdir)]},compress=zstd,noatime /mnt/{mntdir}")
+    if is_homepart:
+        os.system(f"sudo mount -m {hp} /mnt/home")
     for i in ("tmp", "root"):
         os.system(f"mkdir -p /mnt/{i}")
     for i in ("ash", "boot", "etc", "root", "rootfs", "tmp"):
@@ -272,6 +289,21 @@ def use_luks():
             continue
     return e
 
+def use_homepart():
+    clear()
+    while True:
+        print("Would you like to use separate home partition (y/n):")
+        reply = input("> ")
+        if reply.casefold() == "y":
+            hc = True
+            break
+        elif reply.casefold() == "n":
+            hc = False
+            break
+        else:
+            continue
+    return hc
+
 # ---------------------------------------------------------------------------- #
 
 print("Welcome to the AshOS installer!\n")
@@ -281,8 +313,15 @@ with open('res/logos/logo.txt', 'r') as f:
 #   Define variables
 DEBUG = "" # options: "", " >/dev/null 2>&1"
 choice, distro_suffix = get_multiboot(distro)
-btrdirs = [f"@{distro_suffix}", f"@.snapshots{distro_suffix}", f"@boot{distro_suffix}", f"@etc{distro_suffix}", f"@home{distro_suffix}", f"@var{distro_suffix}"]
-mntdirs = ["", ".snapshots", "boot", "etc", "home", "var"]
+is_homepart = use_homepart()
+if is_homepart:
+    btrdirs = [f"@{distro_suffix}", f"@.snapshots{distro_suffix}", f"@boot{distro_suffix}", f"@etc{distro_suffix}", f"@var{distro_suffix}"]
+    mntdirs = ["", ".snapshots", "boot", "etc", "var"]
+    hp = get_homepart()
+else:
+    btrdirs = [f"@{distro_suffix}", f"@.snapshots{distro_suffix}", f"@boot{distro_suffix}", f"@etc{distro_suffix}", f"@home{distro_suffix}", f"@var{distro_suffix}"]
+    mntdirs = ["", ".snapshots", "boot", "etc", "home", "var"]
+    hp = ""
 is_luks = use_luks()
 is_efi = check_efi()
 if is_luks:
